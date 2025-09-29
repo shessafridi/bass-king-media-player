@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Play, Pause, Volume2, VolumeX, Upload, Music } from 'lucide-react';
 import TrapNationStyleVisualizer from './visualizer';
+import DebugPanel, { type FFTDebugParams } from './debug-panel';
 
 export default function MediaPlayer() {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -11,6 +12,14 @@ export default function MediaPlayer() {
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [audioStream, setAudioStream] = useState<MediaStream | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [showDebugPanel, setShowDebugPanel] = useState(false);
+  const [fftParams, setFftParams] = useState<FFTDebugParams>({
+    fftSize: 512,
+    gain: 1.2,
+    decay: 0.95,
+    smoothingTimeConstant: 0.8,
+    windowFunction: 'blackman',
+  });
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -133,6 +142,7 @@ export default function MediaPlayer() {
       <TrapNationStyleVisualizer
         audioStream={audioStream}
         isPlaying={isPlaying}
+        fftParams={fftParams}
       />
 
       <audio
@@ -255,6 +265,14 @@ export default function MediaPlayer() {
         accept='audio/*'
         onChange={handleFileInput}
         className='hidden'
+      />
+
+      {/* Debug Panel */}
+      <DebugPanel
+        params={fftParams}
+        onParamsChange={setFftParams}
+        isVisible={showDebugPanel}
+        onToggle={() => setShowDebugPanel(!showDebugPanel)}
       />
     </div>
   );

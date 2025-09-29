@@ -1,21 +1,37 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useFFTAnalyzer } from '../hooks/use-fft-analyzer';
+import type { FFTDebugParams } from './debug-panel';
 
 interface TrapNationStyleVisualizerProps {
   audioStream: MediaStream | null;
   isPlaying: boolean;
+  fftParams?: FFTDebugParams;
 }
 
 export default function TrapNationStyleVisualizer({
   audioStream,
   isPlaying,
+  fftParams,
 }: TrapNationStyleVisualizerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { getFrequencyData } = useFFTAnalyzer(audioStream, {
+
+  // Default parameters
+  const defaultParams: FFTDebugParams = {
     fftSize: 512,
     gain: 1.2,
     decay: 0.95,
+    smoothingTimeConstant: 0.8,
     windowFunction: 'blackman',
+  };
+
+  const params = fftParams || defaultParams;
+
+  const { getFrequencyData } = useFFTAnalyzer(audioStream, {
+    fftSize: params.fftSize,
+    gain: params.gain,
+    decay: params.decay,
+    smoothingTimeConstant: params.smoothingTimeConstant,
+    windowFunction: params.windowFunction,
   });
 
   useEffect(() => {
@@ -135,7 +151,7 @@ export default function TrapNationStyleVisualizer({
 
     draw();
     return () => cancelAnimationFrame(animationId);
-  }, [getFrequencyData, isPlaying, audioStream]);
+  }, [getFrequencyData, isPlaying, audioStream, params]);
 
   return (
     <canvas
