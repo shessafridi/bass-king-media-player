@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { FFTDebugParams } from './debug-panel';
 
 interface TrapNationStyleVisualizerProps {
@@ -13,6 +13,14 @@ export default function TrapNationStyleVisualizer({
   getFrequencyData,
 }: TrapNationStyleVisualizerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [logoImage, setLogoImage] = useState<HTMLImageElement | null>(null);
+
+  // Load logo image
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => setLogoImage(img);
+    img.src = '/src/assets/logo.png';
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -48,7 +56,7 @@ export default function TrapNationStyleVisualizer({
         // Static visualization when not playing
         const centerX = width / 2;
         const centerY = height / 2;
-        const radius = 120;
+        const radius = 100;
 
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
         ctx.lineWidth = 2;
@@ -68,7 +76,7 @@ export default function TrapNationStyleVisualizer({
 
       const centerX = width / 2;
       const centerY = height / 2;
-      const radius = 250;
+      const radius = 200;
 
       const drawWaveform = (
         color: string,
@@ -103,6 +111,9 @@ export default function TrapNationStyleVisualizer({
         ctx.closePath();
         ctx.stroke();
         ctx.restore();
+        ctx.fillStyle = color;
+
+        ctx.fill();
       };
 
       // Enhanced bass analysis - focus on true bass frequencies (20-250Hz)
@@ -204,12 +215,41 @@ export default function TrapNationStyleVisualizer({
         }
       }
 
+      // Draw logo with bass shake effects
+      if (logoImage) {
+        ctx.save();
+
+        // Apply additional bass shake to logo (on top of the global shake)
+        const logoShakeIntensity = normalizedBass * 8;
+        const logoShakeX = (Math.random() - 0.5) * logoShakeIntensity;
+        const logoShakeY = (Math.random() - 0.5) * logoShakeIntensity;
+        ctx.translate(logoShakeX, logoShakeY);
+
+        // Logo size with bass responsiveness
+        const logoSize = radius * 2 + normalizedBass * 40;
+        const logoX = centerX - logoSize / 2;
+        const logoY = centerY - logoSize / 2;
+
+        // Add glow effect to logo when bass is strong
+        if (normalizedBass > fftParams.bassThreshold) {
+          ctx.shadowBlur = 15 + normalizedBass * 25;
+          ctx.shadowColor = `rgba(255, ${100 + normalizedBass * 155}, 255, ${
+            normalizedBass * 0.6
+          })`;
+        }
+
+        // Draw the logo
+        ctx.drawImage(logoImage, logoX, logoY, logoSize, logoSize);
+
+        ctx.restore();
+      }
+
       animationId = requestAnimationFrame(draw);
     };
 
     draw();
     return () => cancelAnimationFrame(animationId);
-  }, [getFrequencyData, isPlaying, fftParams]);
+  }, [getFrequencyData, isPlaying, fftParams, logoImage]);
 
   return (
     <canvas

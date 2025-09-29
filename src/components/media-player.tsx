@@ -37,13 +37,6 @@ export default function MediaPlayer() {
     smoothingTimeConstant: fftParams.smoothingTimeConstant,
     windowFunction: fftParams.windowFunction,
   });
-  const { getFrequencyData: getFrequencyData2 } = useFFTAnalyzer(audioStream, {
-    fftSize: 32,
-    gain: fftParams.gain,
-    decay: fftParams.decay,
-    smoothingTimeConstant: fftParams.smoothingTimeConstant,
-    windowFunction: fftParams.windowFunction,
-  });
 
   // Create audio stream for visualizer
   useEffect(() => {
@@ -164,7 +157,7 @@ export default function MediaPlayer() {
       <BassBackground
         isPlaying={isPlaying}
         fftParams={fftParams}
-        getFrequencyData={getFrequencyData2}
+        getFrequencyData={getFrequencyData}
       />
 
       {/* <WaveformVisualizer
@@ -173,7 +166,7 @@ export default function MediaPlayer() {
         getFrequencyData={getFrequencyData}
       /> */}
       <TrapNationStyleVisualizer
-        isPlaying={isPlaying}
+        isPlaying
         fftParams={fftParams}
         getFrequencyData={getFrequencyData}
       />

@@ -73,8 +73,11 @@ export function useFFTAnalyzer(
     if (!analyser || !dataArray) return null;
 
     analyser.getByteFrequencyData(dataArray as Uint8Array<ArrayBuffer>);
-    for (let i = 0; i < dataArray.length; i++) {
-      const windowed = dataArray[i] * resolveWindowFn(i, dataArray.length);
+
+    // Optimize window function application for high FFT sizes
+    const length = dataArray.length;
+    for (let i = 0; i < length; i++) {
+      const windowed = dataArray[i] * resolveWindowFn(i, length);
       dataArray[i] = Math.max(dataArray[i] * decay, windowed * gain);
     }
 
