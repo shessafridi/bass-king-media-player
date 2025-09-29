@@ -1,38 +1,18 @@
 import { useEffect, useRef } from 'react';
-import { useFFTAnalyzer } from '../hooks/use-fft-analyzer';
 import type { FFTDebugParams } from './debug-panel';
 
 interface TrapNationStyleVisualizerProps {
-  audioStream: MediaStream | null;
   isPlaying: boolean;
-  fftParams?: FFTDebugParams;
+  fftParams: FFTDebugParams;
+  getFrequencyData: () => Uint8Array | null;
 }
 
 export default function TrapNationStyleVisualizer({
-  audioStream,
   isPlaying,
   fftParams,
+  getFrequencyData,
 }: TrapNationStyleVisualizerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  // Default parameters
-  const defaultParams: FFTDebugParams = {
-    fftSize: 512,
-    gain: 1.2,
-    decay: 0.95,
-    smoothingTimeConstant: 0.8,
-    windowFunction: 'blackman',
-  };
-
-  const params = fftParams || defaultParams;
-
-  const { getFrequencyData } = useFFTAnalyzer(audioStream, {
-    fftSize: params.fftSize,
-    gain: params.gain,
-    decay: params.decay,
-    smoothingTimeConstant: params.smoothingTimeConstant,
-    windowFunction: params.windowFunction,
-  });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -45,9 +25,11 @@ export default function TrapNationStyleVisualizer({
     const draw = () => {
       const width = (canvas.width = window.innerWidth);
       const height = (canvas.height = window.innerHeight);
+
+      // Clear canvas
       ctx.clearRect(0, 0, width, height);
 
-      // Background gradient
+      // Add black radial gradient overlay from center (dark) to edges (transparent)
       const gradient = ctx.createRadialGradient(
         width / 2,
         height / 2,
@@ -56,12 +38,13 @@ export default function TrapNationStyleVisualizer({
         height / 2,
         Math.min(width, height) / 2
       );
-      gradient.addColorStop(0, 'rgba(0, 0, 0, 0.8)');
-      gradient.addColorStop(1, 'rgba(0, 0, 0, 0.95)');
+      gradient.addColorStop(0, 'rgba(0, 0, 0, 0.8)'); // Dark center
+      gradient.addColorStop(0.7, 'rgba(0, 0, 0, 0.3)'); // Semi-transparent middle
+      gradient.addColorStop(1, 'rgba(0, 0, 0, 0)'); // Transparent edges
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, width, height);
 
-      if (!isPlaying || !audioStream) {
+      if (!isPlaying) {
         // Static visualization when not playing
         const centerX = width / 2;
         const centerY = height / 2;
@@ -85,24 +68,33 @@ export default function TrapNationStyleVisualizer({
 
       const centerX = width / 2;
       const centerY = height / 2;
-      const radius = 120;
+      const radius = 250;
 
       const drawWaveform = (
         color: string,
         delay: number = 0,
-        radiusMultiplier: number = 1
+        radiusMultiplier: number = 1,
+        bassBoost: boolean = false
       ) => {
         ctx.save();
         ctx.strokeStyle = color;
-        ctx.lineWidth = 3;
-        ctx.shadowBlur = 10;
+        ctx.lineWidth = 3 + (bassBoost ? normalizedBass * 4 : 0);
+        ctx.shadowBlur = 10 + (bassBoost ? normalizedBass * 20 : 0);
         ctx.shadowColor = color;
         ctx.beginPath();
 
         for (let i = 0; i < freqData.length / 2; i++) {
           const angle = (Math.PI * 2 * i) / (freqData.length / 2);
-          const magnitude = freqData[(i + delay) % freqData.length] / 256;
-          const r = radius * radiusMultiplier + magnitude * 150;
+          let magnitude = freqData[(i + delay) % freqData.length] / 256;
+
+          // Apply bass boost to lower frequencies
+          if (bassBoost && i < freqData.length * 0.1) {
+            magnitude *= 1 + normalizedBass * fftParams.bassBoost * 0.2;
+          }
+
+          const r =
+            radius * radiusMultiplier +
+            magnitude * (150 + (bassBoost ? normalizedBass * 100 : 0));
           const x = centerX + r * Math.cos(angle);
           const y = centerY + r * Math.sin(angle);
           if (i === 0) ctx.moveTo(x, y);
@@ -113,21 +105,53 @@ export default function TrapNationStyleVisualizer({
         ctx.restore();
       };
 
-      // Bass-driven screen shake
-      const bass = freqData.slice(0, 15).reduce((a, b) => a + b, 0) / 15;
-      const shakeIntensity = (bass / 256) * 8;
+      // Enhanced bass analysis - focus on true bass frequencies (20-250Hz)
+      // For 44.1kHz sample rate, bass frequencies are roughly in the first 1-6 bins
+      const bassBins = Math.min(2, Math.floor(freqData.length * 0.1)); // First 10% of bins
+      const subBass =
+        freqData
+          .slice(0, Math.max(1, Math.floor(bassBins * 0.3)))
+          .reduce((a, b) => a + b, 0) / Math.max(1, Math.floor(bassBins * 0.3));
+      const midBass =
+        freqData
+          .slice(Math.floor(bassBins * 0.3), bassBins)
+          .reduce((a, b) => a + b, 0) / Math.max(1, Math.floor(bassBins * 0.7));
+      const bass = Math.max(subBass, midBass);
+
+      // Use configurable bass sensitivity
+      const normalizedBass = Math.min(
+        1,
+        (bass / 256) * fftParams.bassSensitivity
+      );
+
+      // Bass-driven screen shake with enhanced intensity
+      const shakeIntensity = normalizedBass * 15;
       const shakeX = (Math.random() - 0.5) * shakeIntensity;
       const shakeY = (Math.random() - 0.5) * shakeIntensity;
       ctx.translate(shakeX, shakeY);
 
-      // Multiple waveform layers
+      // Multiple waveform layers with bass responsiveness
       drawWaveform('rgba(0, 255, 255, 0.15)', 16, 1.3);
       drawWaveform('rgba(255, 0, 110, 0.2)', 12, 1.2);
       drawWaveform('rgba(131, 56, 236, 0.25)', 8, 1.1);
-      drawWaveform('rgba(255, 255, 255, 0.8)', 0, 1);
+      drawWaveform('rgba(255, 255, 255, 0.8)', 0, 1, true); // Main waveform with bass boost
 
-      // Center glow effect
-      const glowRadius = 20 + (bass / 256) * 40;
+      // Additional bass-driven effects
+      if (normalizedBass > fftParams.bassThreshold) {
+        // Bass pulse effect - additional ring when bass is strong
+        const pulseRadius = radius * 0.8 + normalizedBass * 80;
+        const pulseAlpha = normalizedBass * 0.4;
+        ctx.strokeStyle = `rgba(255, 100, 255, ${pulseAlpha})`;
+        ctx.lineWidth = 2 + normalizedBass * 6;
+        ctx.shadowBlur = 15 + normalizedBass * 25;
+        ctx.shadowColor = 'rgba(255, 100, 255, 0.8)';
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, pulseRadius, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // Enhanced center glow effect with bass responsiveness
+      const glowRadius = 20 + normalizedBass * 60;
       const glowGradient = ctx.createRadialGradient(
         centerX,
         centerY,
@@ -136,7 +160,21 @@ export default function TrapNationStyleVisualizer({
         centerY,
         glowRadius
       );
-      glowGradient.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
+
+      // Dynamic color based on bass intensity
+      const bassColorIntensity = normalizedBass;
+      const red = 255;
+      const green = 100 + bassColorIntensity * 155;
+      const blue = 255 - bassColorIntensity * 100;
+
+      glowGradient.addColorStop(
+        0,
+        `rgba(${red}, ${green}, ${blue}, ${0.3 + normalizedBass * 0.4})`
+      );
+      glowGradient.addColorStop(
+        0.5,
+        `rgba(${red}, ${green}, ${blue}, ${0.1 + normalizedBass * 0.2})`
+      );
       glowGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
       ctx.fillStyle = glowGradient;
       ctx.fillRect(
@@ -146,12 +184,32 @@ export default function TrapNationStyleVisualizer({
         glowRadius * 2
       );
 
+      // Bass-driven particle effects
+      if (normalizedBass > fftParams.bassThreshold + 0.1) {
+        const particleCount = Math.floor(normalizedBass * 20);
+        for (let i = 0; i < particleCount; i++) {
+          const angle = (Math.PI * 2 * i) / particleCount;
+          const distance = 100 + normalizedBass * 150;
+          const x = centerX + Math.cos(angle) * distance;
+          const y = centerY + Math.sin(angle) * distance;
+
+          ctx.fillStyle = `rgba(255, ${100 + normalizedBass * 155}, 255, ${
+            normalizedBass * 0.8
+          })`;
+          ctx.shadowBlur = 10 + normalizedBass * 15;
+          ctx.shadowColor = 'rgba(255, 100, 255, 0.8)';
+          ctx.beginPath();
+          ctx.arc(x, y, 2 + normalizedBass * 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
       animationId = requestAnimationFrame(draw);
     };
 
     draw();
     return () => cancelAnimationFrame(animationId);
-  }, [getFrequencyData, isPlaying, audioStream, params]);
+  }, [getFrequencyData, isPlaying, fftParams]);
 
   return (
     <canvas

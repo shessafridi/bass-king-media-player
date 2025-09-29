@@ -1,4 +1,3 @@
-import React from 'react';
 import { Settings, X } from 'lucide-react';
 
 export interface FFTDebugParams {
@@ -7,6 +6,9 @@ export interface FFTDebugParams {
   decay: number;
   smoothingTimeConstant: number;
   windowFunction: 'rectangular' | 'hamming' | 'hann' | 'blackman';
+  bassSensitivity: number;
+  bassBoost: number;
+  bassThreshold: number;
 }
 
 interface DebugPanelProps {
@@ -34,11 +36,14 @@ export default function DebugPanel({
 
   const resetToDefaults = () => {
     onParamsChange({
-      fftSize: 512,
+      fftSize: 4096,
       gain: 1.2,
       decay: 0.95,
       smoothingTimeConstant: 0.8,
       windowFunction: 'blackman',
+      bassSensitivity: 2.5,
+      bassBoost: 2.0,
+      bassThreshold: 0.3,
     });
   };
 
@@ -197,6 +202,79 @@ export default function DebugPanel({
           </select>
         </div>
 
+        {/* Bass Controls Section */}
+        <div className='pt-4 border-t border-white/10'>
+          <h4 className='text-sm font-medium mb-3 text-cyan-400'>
+            Bass Controls
+          </h4>
+
+          {/* Bass Sensitivity */}
+          <div className='mb-4'>
+            <label className='block text-sm font-medium mb-2'>
+              Bass Sensitivity: {params.bassSensitivity.toFixed(1)}x
+            </label>
+            <input
+              type='range'
+              min='0.5'
+              max='5.0'
+              step='0.1'
+              value={params.bassSensitivity}
+              onChange={e =>
+                handleParamChange('bassSensitivity', parseFloat(e.target.value))
+              }
+              className='w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider'
+            />
+            <div className='flex justify-between text-xs text-gray-400 mt-1'>
+              <span>0.5x</span>
+              <span>5.0x</span>
+            </div>
+          </div>
+
+          {/* Bass Boost */}
+          <div className='mb-4'>
+            <label className='block text-sm font-medium mb-2'>
+              Bass Boost: {params.bassBoost.toFixed(1)}x
+            </label>
+            <input
+              type='range'
+              min='1.0'
+              max='4.0'
+              step='0.1'
+              value={params.bassBoost}
+              onChange={e =>
+                handleParamChange('bassBoost', parseFloat(e.target.value))
+              }
+              className='w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider'
+            />
+            <div className='flex justify-between text-xs text-gray-400 mt-1'>
+              <span>1.0x</span>
+              <span>4.0x</span>
+            </div>
+          </div>
+
+          {/* Bass Threshold */}
+          <div className='mb-4'>
+            <label className='block text-sm font-medium mb-2'>
+              Bass Threshold: {params.bassThreshold.toFixed(2)}
+            </label>
+            <input
+              type='range'
+              min='0.1'
+              max='0.8'
+              step='0.05'
+              value={params.bassThreshold}
+              onChange={e =>
+                handleParamChange('bassThreshold', parseFloat(e.target.value))
+              }
+              className='w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider'
+            />
+            <div className='flex justify-between text-xs text-gray-400 mt-1'>
+              <span>0.1</span>
+              <span>0.8</span>
+            </div>
+          </div>
+        </div>
+
         {/* Real-time Info */}
         <div className='pt-4 border-t border-white/10'>
           <h4 className='text-sm font-medium mb-2'>Current Settings</h4>
@@ -209,6 +287,12 @@ export default function DebugPanel({
             <div>Decay: {params.decay.toFixed(3)}</div>
             <div>Smoothing: {params.smoothingTimeConstant.toFixed(2)}</div>
             <div>Window: {params.windowFunction}</div>
+            <div className='pt-2 border-t border-white/5'>
+              <div className='text-cyan-400 font-medium'>Bass Settings:</div>
+              <div>Bass Sensitivity: {params.bassSensitivity.toFixed(1)}x</div>
+              <div>Bass Boost: {params.bassBoost.toFixed(1)}x</div>
+              <div>Bass Threshold: {params.bassThreshold.toFixed(2)}</div>
+            </div>
           </div>
         </div>
       </div>

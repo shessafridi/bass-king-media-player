@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Play, Pause, Volume2, VolumeX, Upload, Music } from 'lucide-react';
 import TrapNationStyleVisualizer from './visualizer';
+import BassBackground from './bass-background';
 import DebugPanel, { type FFTDebugParams } from './debug-panel';
+import { useFFTAnalyzer } from '../hooks/use-fft-analyzer';
 
 export default function MediaPlayer() {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -14,15 +16,34 @@ export default function MediaPlayer() {
   const [isDragOver, setIsDragOver] = useState(false);
   const [showDebugPanel, setShowDebugPanel] = useState(false);
   const [fftParams, setFftParams] = useState<FFTDebugParams>({
-    fftSize: 512,
+    fftSize: 4096,
     gain: 1.2,
     decay: 0.95,
     smoothingTimeConstant: 0.8,
     windowFunction: 'blackman',
+    bassSensitivity: 2.5,
+    bassBoost: 2.0,
+    bassThreshold: 0.3,
   });
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Single FFT analyzer for both visualizers
+  const { getFrequencyData } = useFFTAnalyzer(audioStream, {
+    fftSize: fftParams.fftSize,
+    gain: fftParams.gain,
+    decay: fftParams.decay,
+    smoothingTimeConstant: fftParams.smoothingTimeConstant,
+    windowFunction: fftParams.windowFunction,
+  });
+  const { getFrequencyData: getFrequencyData2 } = useFFTAnalyzer(audioStream, {
+    fftSize: 32,
+    gain: fftParams.gain,
+    decay: fftParams.decay,
+    smoothingTimeConstant: fftParams.smoothingTimeConstant,
+    windowFunction: fftParams.windowFunction,
+  });
 
   // Create audio stream for visualizer
   useEffect(() => {
@@ -139,10 +160,22 @@ export default function MediaPlayer() {
 
   return (
     <div className='relative w-full h-screen bg-black overflow-hidden'>
-      <TrapNationStyleVisualizer
-        audioStream={audioStream}
+      {/* Bass-responsive background */}
+      <BassBackground
         isPlaying={isPlaying}
         fftParams={fftParams}
+        getFrequencyData={getFrequencyData2}
+      />
+
+      {/* <WaveformVisualizer
+        isPlaying={isPlaying}
+        fftParams={fftParams}
+        getFrequencyData={getFrequencyData}
+      /> */}
+      <TrapNationStyleVisualizer
+        isPlaying={isPlaying}
+        fftParams={fftParams}
+        getFrequencyData={getFrequencyData}
       />
 
       <audio

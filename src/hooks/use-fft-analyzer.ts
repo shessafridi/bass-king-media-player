@@ -26,7 +26,7 @@ export function useFFTAnalyzer(
   options: FFTOptions = {}
 ) {
   const {
-    fftSize = 512,
+    fftSize = 4096,
     gain = 1,
     decay = 0.97,
     smoothingTimeConstant = 0.8,
