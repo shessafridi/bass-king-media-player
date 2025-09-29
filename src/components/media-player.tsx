@@ -39,6 +39,36 @@ export default function MediaPlayer() {
     windowFunction: fftParams.windowFunction,
   });
 
+  // Calculate dynamic volume based on FFT size
+  const calculateVisualizationVolume = (fftSize: number): number => {
+    if (fftSize === 4096) {
+      return 0.07;
+    }
+    if (fftSize === 2048) {
+      return 0.04;
+    }
+    if (fftSize === 1024) {
+      return 0.02;
+    }
+    if (fftSize === 512) {
+      return 0.01;
+    }
+    if (fftSize === 256) {
+      return 0.005;
+    }
+    if (fftSize === 128) {
+      return 0.0025;
+    }
+    // Base volume for 4096 FFT size
+    const baseVolume = 0.07;
+    const baseFftSize = 4096;
+
+    // Scale volume inversely with FFT size
+    // Smaller FFT sizes need less volume to avoid overwhelming the visualization
+    const volumeScale = baseFftSize / fftSize;
+    return Math.max(0.01, Math.min(0.5, baseVolume * volumeScale));
+  };
+
   // Create audio stream for visualizer from visualization-only audio
   useEffect(() => {
     if (visualizationAudioRef.current && audioFile) {
@@ -50,12 +80,18 @@ export default function MediaPlayer() {
       );
       const destination = audioContext.createMediaStreamDestination();
       source.connect(destination);
-      // Don't connect to audioContext.destination for visualization audio
-      // Set volume to 1.0 for visualization but keep muted attribute for no audio output
-      visualizationAudioRef.current.volume = 0.07;
       setAudioStream(destination.stream);
     }
   }, [audioFile]);
+
+  // Update visualization volume when FFT size changes
+  useEffect(() => {
+    if (visualizationAudioRef.current) {
+      const calculatedVolume = calculateVisualizationVolume(fftParams.fftSize);
+      console.log('calculatedVolume', calculatedVolume);
+      visualizationAudioRef.current.volume = calculatedVolume;
+    }
+  }, [fftParams.fftSize]);
 
   const handleFileSelect = (file: File) => {
     if (file && file.type.startsWith('audio/')) {
