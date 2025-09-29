@@ -195,10 +195,18 @@ export default function DebugPanel({
             }
             className='w-full p-2 bg-white/10 rounded-lg border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400'
           >
-            <option value='rectangular'>Rectangular</option>
-            <option value='hamming'>Hamming</option>
-            <option value='hann'>Hann</option>
-            <option value='blackman'>Blackman</option>
+            <option className='text-black' value='rectangular'>
+              Rectangular
+            </option>
+            <option className='text-black' value='hamming'>
+              Hamming
+            </option>
+            <option className='text-black' value='hann'>
+              Hann
+            </option>
+            <option className='text-black' value='blackman'>
+              Blackman
+            </option>
           </select>
         </div>
 

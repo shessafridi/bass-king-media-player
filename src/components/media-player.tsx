@@ -9,7 +9,7 @@ export default function MediaPlayer() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(0.7);
+  const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [audioStream, setAudioStream] = useState<MediaStream | null>(null);
@@ -27,6 +27,7 @@ export default function MediaPlayer() {
   });
 
   const audioRef = useRef<HTMLAudioElement>(null);
+  const visualizationAudioRef = useRef<HTMLAudioElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Single FFT analyzer for both visualizers
@@ -38,16 +39,20 @@ export default function MediaPlayer() {
     windowFunction: fftParams.windowFunction,
   });
 
-  // Create audio stream for visualizer
+  // Create audio stream for visualizer from visualization-only audio
   useEffect(() => {
-    if (audioRef.current && audioFile) {
+    if (visualizationAudioRef.current && audioFile) {
       const audioContext = new (window.AudioContext ||
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (window as any).webkitAudioContext)();
-      const source = audioContext.createMediaElementSource(audioRef.current);
+      const source = audioContext.createMediaElementSource(
+        visualizationAudioRef.current
+      );
       const destination = audioContext.createMediaStreamDestination();
       source.connect(destination);
-      source.connect(audioContext.destination);
+      // Don't connect to audioContext.destination for visualization audio
+      // Set volume to 1.0 for visualization but keep muted attribute for no audio output
+      visualizationAudioRef.current.volume = 0.07;
       setAudioStream(destination.stream);
     }
   }, [audioFile]);
@@ -59,6 +64,10 @@ export default function MediaPlayer() {
       if (audioRef.current) {
         audioRef.current.src = url;
         audioRef.current.load();
+      }
+      if (visualizationAudioRef.current) {
+        visualizationAudioRef.current.src = url;
+        visualizationAudioRef.current.load();
       }
     }
   };
@@ -86,12 +95,15 @@ export default function MediaPlayer() {
   };
 
   const togglePlay = () => {
-    if (!audioRef.current || !audioFile) return;
+    if (!audioRef.current || !visualizationAudioRef.current || !audioFile)
+      return;
 
     if (isPlaying) {
       audioRef.current.pause();
+      visualizationAudioRef.current.pause();
     } else {
       audioRef.current.play();
+      visualizationAudioRef.current.play();
     }
     setIsPlaying(!isPlaying);
   };
@@ -109,12 +121,14 @@ export default function MediaPlayer() {
   };
 
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!audioRef.current || !duration) return;
+    if (!audioRef.current || !visualizationAudioRef.current || !duration)
+      return;
 
     const rect = e.currentTarget.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const newTime = (clickX / rect.width) * duration;
     audioRef.current.currentTime = newTime;
+    visualizationAudioRef.current.currentTime = newTime;
     setCurrentTime(newTime);
   };
 
@@ -178,6 +192,9 @@ export default function MediaPlayer() {
         onEnded={() => setIsPlaying(false)}
         className='hidden'
       />
+
+      {/* Visualization-only audio element - hidden but not muted for FFT analysis */}
+      <audio ref={visualizationAudioRef} className='hidden' />
 
       {/* File Drop Zone */}
       {!audioFile && (

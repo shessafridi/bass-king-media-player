@@ -227,7 +227,7 @@ export default function TrapNationStyleVisualizer({
         ctx.translate(logoShakeX, logoShakeY);
 
         // Logo size with bass responsiveness
-        const logoSize = radius * 2 + normalizedBass * 40;
+        const logoSize = radius * 2 + normalizedBass * 10;
         const logoX = centerX - logoSize / 2;
         const logoY = centerY - logoSize / 2;
 
