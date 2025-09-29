@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 export type FFTWindowPreset = 'rectangular' | 'hamming' | 'hann' | 'blackman';
 
@@ -22,7 +22,7 @@ const windowPresets: Record<FFTWindowPreset, (i: number, N: number) => number> =
   };
 
 export function useFFTAnalyzer(
-  audioStream: MediaStream,
+  audioStream: MediaStream | null,
   options: FFTOptions = {}
 ) {
   const {
@@ -43,6 +43,8 @@ export function useFFTAnalyzer(
       : windowFunction;
 
   useEffect(() => {
+    if (!audioStream) return;
+
     const audioContext = new (window.AudioContext ||
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window as any).webkitAudioContext)();
