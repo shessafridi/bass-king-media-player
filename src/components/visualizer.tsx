@@ -15,12 +15,28 @@ export default function TrapNationStyleVisualizer({
 }: TrapNationStyleVisualizerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [logoImage, setLogoImage] = useState<HTMLImageElement | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   // Load logo image
   useEffect(() => {
     const img = new Image();
     img.onload = () => setLogoImage(img);
     img.src = logo;
+  }, []);
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      const isMobileDevice =
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+          navigator.userAgent
+        ) || window.innerWidth <= 768;
+      setIsMobile(isMobileDevice);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   useEffect(() => {
@@ -57,7 +73,7 @@ export default function TrapNationStyleVisualizer({
         // Static visualization when not playing
         const centerX = width / 2;
         const centerY = height / 2;
-        const radius = 100;
+        const radius = isMobile ? 60 : 100;
 
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
         ctx.lineWidth = 2;
@@ -77,7 +93,8 @@ export default function TrapNationStyleVisualizer({
 
       const centerX = width / 2;
       const centerY = height / 2;
-      const radius = 200;
+      // Responsive radius: smaller on mobile devices
+      const radius = isMobile ? 120 : 200;
 
       const drawWaveform = (
         color: string,
@@ -250,7 +267,7 @@ export default function TrapNationStyleVisualizer({
 
     draw();
     return () => cancelAnimationFrame(animationId);
-  }, [getFrequencyData, isPlaying, fftParams, logoImage]);
+  }, [getFrequencyData, isPlaying, fftParams, logoImage, isMobile]);
 
   return (
     <canvas
