@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { FFTDebugParams } from './debug-panel';
+import bg from '../assets/bg.jpg';
 
 interface BassBackgroundProps {
   isPlaying: boolean;
@@ -89,7 +90,7 @@ export default function BassBackground({
       ref={containerRef}
       className='absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat transition-all duration-[50px]'
       style={{
-        backgroundImage: 'url(/src/assets/bg.jpg)',
+        backgroundImage: `url(${bg})`,
         filter: 'brightness(0.3)',
       }}
     />

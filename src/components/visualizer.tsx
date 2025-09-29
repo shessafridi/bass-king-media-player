@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FFTDebugParams } from './debug-panel';
+import logo from '../assets/logo.png';
 
 interface TrapNationStyleVisualizerProps {
   isPlaying: boolean;
@@ -19,7 +20,7 @@ export default function TrapNationStyleVisualizer({
   useEffect(() => {
     const img = new Image();
     img.onload = () => setLogoImage(img);
-    img.src = '/src/assets/logo.png';
+    img.src = logo;
   }, []);
 
   useEffect(() => {
