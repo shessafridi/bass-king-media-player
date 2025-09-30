@@ -1,5 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Pause, Volume2, VolumeX, Upload, Music } from 'lucide-react';
+import {
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  Upload,
+  Music,
+  Eye,
+  EyeOff,
+} from 'lucide-react';
 import TrapNationStyleVisualizer from './visualizer';
 import BassBackground from './bass-background';
 import DebugPanel, { type FFTDebugParams } from './debug-panel';
@@ -15,6 +24,7 @@ export default function MediaPlayer() {
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [audioStream, setAudioStream] = useState<MediaStream | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [uiHidden, setUiHidden] = useState(false);
   const [showDebugPanel, setShowDebugPanel] = useState(false);
   const [fftParams, setFftParams] = useState<FFTDebugParams>(
     getDefaultFFTParams()
@@ -227,8 +237,21 @@ export default function MediaPlayer() {
       {/* Visualization-only audio element - hidden but not muted for FFT analysis */}
       <audio ref={visualizationAudioRef} className='hidden' />
 
+      {/* UI Toggle Button */}
+      <button
+        onClick={() => setUiHidden(!uiHidden)}
+        className='absolute top-4 left-4 z-50 w-12 h-12 bg-black/60 backdrop-blur-lg rounded-full flex items-center justify-center text-white hover:bg-black/80 transition-all duration-300 border border-white/10'
+        title={uiHidden ? 'Show UI' : 'Hide UI'}
+      >
+        {uiHidden ? (
+          <Eye className='w-5 h-5' />
+        ) : (
+          <EyeOff className='w-5 h-5' />
+        )}
+      </button>
+
       {/* File Drop Zone */}
-      {!audioFile && (
+      {!audioFile && !uiHidden && (
         <div
           className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${
             isDragOver ? 'bg-blue-900/50' : 'bg-black/50'
@@ -255,9 +278,9 @@ export default function MediaPlayer() {
       )}
 
       {/* Media Controls */}
-      {audioFile && (
-        <div className='absolute bottom-0 left-0 right-0 p-6'>
-          <div className='bg-black/60 backdrop-blur-lg rounded-2xl p-6 border border-white/10'>
+      {audioFile && !uiHidden && (
+        <div className='absolute bottom-0 left-0 right-0 p-6 flex justify-center'>
+          <div className='bg-black/60 backdrop-blur-lg rounded-2xl p-6 w-full max-w-4xl border border-white/10'>
             {/* Song Info */}
             <div className='mb-4'>
               <h3 className='text-white font-semibold truncate'>
@@ -318,15 +341,17 @@ export default function MediaPlayer() {
                     <Volume2 className='w-5 h-5' />
                   )}
                 </button>
-                <input
-                  type='range'
-                  min='0'
-                  max='1'
-                  step='0.01'
-                  value={isMuted ? 0 : volume}
-                  onChange={handleVolumeChange}
-                  className='w-24 h-1 bg-gray-700 rounded-full appearance-none cursor-pointer slider'
-                />
+                <div className='bg-gray-700 rounded-full flex items-center'>
+                  <input
+                    type='range'
+                    min='0'
+                    max='1'
+                    step='0.01'
+                    value={isMuted ? 0 : volume}
+                    onChange={handleVolumeChange}
+                    className='w-24 h-1 bg-gray-700 rounded-full appearance-none cursor-pointer slider'
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -342,12 +367,14 @@ export default function MediaPlayer() {
       />
 
       {/* Debug Panel */}
-      <DebugPanel
-        params={fftParams}
-        onParamsChange={setFftParams}
-        isVisible={showDebugPanel}
-        onToggle={() => setShowDebugPanel(!showDebugPanel)}
-      />
+      {!uiHidden && (
+        <DebugPanel
+          params={fftParams}
+          onParamsChange={setFftParams}
+          isVisible={showDebugPanel}
+          onToggle={() => setShowDebugPanel(!showDebugPanel)}
+        />
+      )}
     </div>
   );
 }
