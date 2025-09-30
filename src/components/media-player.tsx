@@ -4,6 +4,7 @@ import TrapNationStyleVisualizer from './visualizer';
 import BassBackground from './bass-background';
 import DebugPanel, { type FFTDebugParams } from './debug-panel';
 import { useFFTAnalyzer } from '../hooks/use-fft-analyzer';
+import { getDefaultFFTParams } from '../lib/fft-params';
 
 export default function MediaPlayer() {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -15,16 +16,9 @@ export default function MediaPlayer() {
   const [audioStream, setAudioStream] = useState<MediaStream | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [showDebugPanel, setShowDebugPanel] = useState(false);
-  const [fftParams, setFftParams] = useState<FFTDebugParams>({
-    fftSize: 4096,
-    gain: 1.2,
-    decay: 0.95,
-    smoothingTimeConstant: 0.8,
-    windowFunction: 'blackman',
-    bassSensitivity: 2.5,
-    bassBoost: 2.0,
-    bassThreshold: 0.3,
-  });
+  const [fftParams, setFftParams] = useState<FFTDebugParams>(
+    getDefaultFFTParams()
+  );
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const visualizationAudioRef = useRef<HTMLAudioElement>(null);
@@ -33,7 +27,7 @@ export default function MediaPlayer() {
   // Single FFT analyzer for both visualizers
   const { getFrequencyData } = useFFTAnalyzer(audioStream, {
     fftSize: fftParams.fftSize,
-    gain: fftParams.gain,
+    gain: 1.2,
     decay: fftParams.decay,
     smoothingTimeConstant: fftParams.smoothingTimeConstant,
     windowFunction: fftParams.windowFunction,
@@ -45,7 +39,7 @@ export default function MediaPlayer() {
       return 0.07;
     }
     if (fftSize === 2048) {
-      return 0.04;
+      return 0.037;
     }
     if (fftSize === 1024) {
       return 0.02;
@@ -87,11 +81,12 @@ export default function MediaPlayer() {
   // Update visualization volume when FFT size changes
   useEffect(() => {
     if (visualizationAudioRef.current) {
-      const calculatedVolume = calculateVisualizationVolume(fftParams.fftSize);
+      const calculatedVolume =
+        calculateVisualizationVolume(fftParams.fftSize) * fftParams.gain;
       console.log('calculatedVolume', calculatedVolume);
       visualizationAudioRef.current.volume = calculatedVolume;
     }
-  }, [fftParams.fftSize]);
+  }, [fftParams.fftSize, fftParams.gain]);
 
   const handleFileSelect = (file: File) => {
     if (file && file.type.startsWith('audio/')) {

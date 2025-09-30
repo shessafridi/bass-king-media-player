@@ -88,11 +88,16 @@ export default function BassBackground({
   return (
     <div
       ref={containerRef}
-      className='absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat transition-all duration-[50px]'
-      style={{
-        backgroundImage: `url(${bg})`,
-        filter: 'brightness(0.3)',
-      }}
-    />
+      className='absolute inset-0 w-full h-full overflow-hidden'
+    >
+      <img
+        src={bg}
+        alt='Background'
+        className='w-full h-full object-cover transition-all duration-[50px] scale-105'
+        style={{
+          animation: 'sway 8s ease-in-out infinite',
+        }}
+      />
+    </div>
   );
 }

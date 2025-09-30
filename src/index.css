@@ -53,3 +53,20 @@
   transform: scale(1.1);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
 }
+
+/* Sway animation for background */
+@keyframes sway {
+  0%,
+  100% {
+    transform: translateX(0px) translateY(0px);
+  }
+  25% {
+    transform: translateX(20px) translateY(-10px);
+  }
+  50% {
+    transform: translateX(0px) translateY(-2px);
+  }
+  75% {
+    transform: translateX(-20px) translateY(-10px);
+  }
+}

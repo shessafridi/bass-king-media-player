@@ -1,4 +1,5 @@
 import { Settings, X } from 'lucide-react';
+import { getDefaultFFTParams } from '../lib/fft-params';
 
 export interface FFTDebugParams {
   fftSize: number;
@@ -35,16 +36,7 @@ export default function DebugPanel({
   };
 
   const resetToDefaults = () => {
-    onParamsChange({
-      fftSize: 4096,
-      gain: 1.2,
-      decay: 0.95,
-      smoothingTimeConstant: 0.8,
-      windowFunction: 'blackman',
-      bassSensitivity: 2.5,
-      bassBoost: 2.0,
-      bassThreshold: 0.3,
-    });
+    onParamsChange(getDefaultFFTParams());
   };
 
   if (!isVisible) {
