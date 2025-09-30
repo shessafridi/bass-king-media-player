@@ -1,6 +1,6 @@
 import { Settings, X } from 'lucide-react';
 import { getDefaultFFTParams } from '../lib/fft-params';
-
+import dspLogo from '../assets/dsp-logo.png';
 export interface FFTDebugParams {
   fftSize: number;
   gain: number;
@@ -53,8 +53,11 @@ export default function DebugPanel({
 
   return (
     <div className='fixed top-4 right-4 z-50 w-80 max-h-[calc(100vh-2rem)] bg-black/80 backdrop-blur-lg rounded-2xl border border-white/20 text-white flex flex-col'>
+      <div className='p-6 pb-0'>
+        <img src={dspLogo} width={180} />
+      </div>
       <div className='flex items-center justify-between p-6 pb-4 flex-shrink-0'>
-        <h3 className='text-lg font-semibold'>FFT Debug Panel</h3>
+        <h3 className='text-lg font-semibold'>FFT Configuration</h3>
         <div className='flex gap-2'>
           <button
             onClick={resetToDefaults}

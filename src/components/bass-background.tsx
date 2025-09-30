@@ -46,7 +46,7 @@ export default function BassBackground({
       }
 
       // Simplified bass analysis - only check first few bins for performance
-      const bassBins = Math.min(1, Math.floor(freqData.length * 0.1));
+      const bassBins = Math.min(4, Math.floor(freqData.length * 0.1));
       let bassSum = 0;
       for (let i = 0; i < bassBins; i++) {
         bassSum += freqData[i];
