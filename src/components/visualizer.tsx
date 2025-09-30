@@ -2,17 +2,17 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { FFTDebugParams } from './debug-panel';
 import logo from '../assets/logo.png';
 
-interface TrapNationStyleVisualizerProps {
+interface BassKingVisualizerProps {
   isPlaying: boolean;
   fftParams: FFTDebugParams;
   getFrequencyData: () => Uint8Array | null;
 }
 
-export default function TrapNationStyleVisualizer({
+export default function BassKingVisualizer({
   isPlaying,
   fftParams,
   getFrequencyData,
-}: TrapNationStyleVisualizerProps) {
+}: BassKingVisualizerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [logoImage, setLogoImage] = useState<HTMLImageElement | null>(null);
   const [isMobile, setIsMobile] = useState(false);

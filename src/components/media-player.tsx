@@ -9,7 +9,7 @@ import {
   Eye,
   EyeOff,
 } from 'lucide-react';
-import TrapNationStyleVisualizer from './visualizer';
+import BassKingVisualizer from './visualizer';
 import BassBackground from './bass-background';
 import DebugPanel, { type FFTDebugParams } from './debug-panel';
 import { useFFTAnalyzer } from '../hooks/use-fft-analyzer';
@@ -220,7 +220,7 @@ export default function MediaPlayer() {
         fftParams={fftParams}
         getFrequencyData={getFrequencyData}
       /> */}
-      <TrapNationStyleVisualizer
+      <BassKingVisualizer
         isPlaying
         fftParams={fftParams}
         getFrequencyData={getFrequencyData}
