@@ -14,6 +14,17 @@ import BassBackground from './bass-background';
 import DebugPanel, { type FFTDebugParams } from './debug-panel';
 import { useFFTAnalyzer } from '../hooks/use-fft-analyzer';
 import { getDefaultFFTParams } from '../lib/fft-params';
+import { useMediaSession } from '../hooks/use-media-session';
+import { parseBlob, type IAudioMetadata } from 'music-metadata';
+
+function uint8ToBase64(uint8Array: Uint8Array) {
+  let binary = '';
+  const len = uint8Array.byteLength;
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(uint8Array[i]);
+  }
+  return window.btoa(binary);
+}
 
 export default function MediaPlayer() {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -29,6 +40,18 @@ export default function MediaPlayer() {
   const [fftParams, setFftParams] = useState<FFTDebugParams>(
     getDefaultFFTParams()
   );
+
+  const [audioMetadata, setAudioMetadata] = useState<IAudioMetadata | null>(
+    null
+  );
+
+  useEffect(() => {
+    if (!audioFile) return;
+    parseBlob(audioFile).then(meta => {
+      console.log(meta);
+      setAudioMetadata(meta);
+    });
+  }, [audioFile]);
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const visualizationAudioRef = useRef<HTMLAudioElement>(null);
@@ -135,18 +158,31 @@ export default function MediaPlayer() {
     setIsDragOver(false);
   };
 
+  const setSeekTime = (time: number) => {
+    if (!audioRef.current || !visualizationAudioRef.current) return;
+    const newTime = Math.min(Math.max(0, time), audioRef.current.duration);
+    visualizationAudioRef.current.currentTime = newTime;
+    audioRef.current.currentTime = newTime;
+    setCurrentTime(newTime);
+  };
+
+  const play = () => {
+    audioRef.current?.play();
+    visualizationAudioRef.current?.play();
+    setIsPlaying(true);
+  };
+  const pause = () => {
+    audioRef.current?.pause();
+    visualizationAudioRef.current?.pause();
+    setIsPlaying(false);
+  };
+
   const togglePlay = () => {
     if (!audioRef.current || !visualizationAudioRef.current || !audioFile)
       return;
 
-    if (isPlaying) {
-      audioRef.current.pause();
-      visualizationAudioRef.current.pause();
-    } else {
-      audioRef.current.play();
-      visualizationAudioRef.current.play();
-    }
-    setIsPlaying(!isPlaying);
+    if (isPlaying) pause();
+    else play();
   };
 
   const handleTimeUpdate = () => {
@@ -197,6 +233,115 @@ export default function MediaPlayer() {
       }
     }
   };
+
+  const {
+    isSupported,
+    setMetadata,
+    setPlaybackState,
+    setActionHandler,
+    clearActionHandlers,
+  } = useMediaSession();
+
+  React.useEffect(() => {
+    if (isSupported) {
+      setActionHandler('play', play);
+      setActionHandler('pause', pause);
+      setActionHandler('seekto', details => {
+        if (details.seekTime !== undefined) {
+          setSeekTime(details.seekTime);
+        }
+      });
+      setActionHandler('stop', pause);
+      setActionHandler('seekbackward', () => {
+        if (!audioRef.current || !visualizationAudioRef.current) return;
+        setSeekTime(audioRef.current.currentTime - 10);
+      });
+      setActionHandler('seekforward', () => {
+        if (!audioRef.current || !visualizationAudioRef.current) return;
+        setSeekTime(audioRef.current.currentTime + 10);
+      });
+
+      setMetadata({
+        album: audioMetadata?.common.album,
+        title: audioMetadata?.common.title,
+        artist: audioMetadata?.common.artist,
+        artwork: audioMetadata?.common.picture?.map(p => ({
+          src: `data:${p.format};base64,${uint8ToBase64(p.data)}`,
+          sizes: '512x512',
+          type: p.format,
+        })),
+      });
+
+      return () => {
+        clearActionHandlers();
+      };
+    }
+  }, [
+    audioMetadata?.common.album,
+    audioMetadata?.common.artist,
+    audioMetadata?.common.picture,
+    audioMetadata?.common.title,
+    clearActionHandlers,
+    isSupported,
+    setActionHandler,
+    setMetadata,
+  ]);
+
+  React.useEffect(() => {
+    if (isPlaying) setPlaybackState('playing');
+    else setPlaybackState('paused');
+  }, [isPlaying, setPlaybackState]);
+
+  // useMultiMediaKeyboard({
+  //   onPlayPause: () => {
+  //     togglePlay();
+  //   },
+  //   onMute: () => {
+  //     toggleMute();
+  //   },
+  //   onPlay: () => play(),
+  //   onPause: () => pause(),
+  //   onStop: () => pause(),
+  //   onFullscreen: () => {
+  //     if (document.fullscreenElement) {
+  //       document.exitFullscreen();
+  //       return;
+  //     }
+  //     const doc = window.document;
+  //     const docEl = doc.documentElement;
+  //     const requestFullScreen =
+  //       docEl.requestFullscreen ||
+  //       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  //       (docEl as any).mozRequestFullScreen ||
+  //       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  //       (docEl as any).webkitRequestFullScreen ||
+  //       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  //       (docEl as any).msRequestFullscreen;
+  //     requestFullScreen.call(docEl);
+  //   },
+  //   onVolumeDown: () => {
+  //     const newVolume = Math.max(0, volume - 0.1);
+  //     setVolume(newVolume);
+  //     if (audioRef.current) {
+  //       audioRef.current.volume = newVolume;
+  //     }
+  //   },
+  //   onVolumeUp: () => {
+  //     const newVolume = Math.min(1, volume + 0.1);
+  //     setVolume(newVolume);
+  //     if (audioRef.current) {
+  //       audioRef.current.volume = newVolume;
+  //     }
+  //   },
+  //   onSeekBackward: () => {
+  //     if (!audioRef.current || !visualizationAudioRef.current) return;
+  //     setSeekTime(audioRef.current.currentTime - 10);
+  //   },
+  //   onSeekForward: () => {
+  //     if (!audioRef.current || !visualizationAudioRef.current) return;
+  //     setSeekTime(audioRef.current.currentTime + 10);
+  //   },
+  // });
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -282,10 +427,28 @@ export default function MediaPlayer() {
         <div className='absolute bottom-0 left-0 right-0 p-6 flex justify-center'>
           <div className='bg-black/60 backdrop-blur-lg rounded-2xl p-6 w-full max-w-4xl border border-white/10'>
             {/* Song Info */}
-            <div className='mb-4'>
-              <h3 className='text-white font-semibold truncate'>
-                {audioFile.name}
-              </h3>
+            <div className='flex gap-4 pb-5 items-end'>
+              {audioMetadata?.common.picture?.slice(0, 1)?.map(p => (
+                <img
+                  key={1}
+                  className='rounded-lg'
+                  width={80}
+                  height={80}
+                  src={`data:${p.format};base64,${uint8ToBase64(p.data)}`}
+                />
+              ))}
+              <div className='mb-4'>
+                <h3 className='text-white font-semibold truncate'>
+                  {audioMetadata?.common
+                    ? `${audioMetadata?.common.artist} - ${audioMetadata?.common.title}`
+                    : audioFile.name}
+                </h3>
+                {!!audioMetadata?.common.album && (
+                  <h3 className='text-white font-semibold truncate  text-xs'>
+                    {audioMetadata?.common.album}
+                  </h3>
+                )}
+              </div>
             </div>
 
             {/* Progress Bar */}

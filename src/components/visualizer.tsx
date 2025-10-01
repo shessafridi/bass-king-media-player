@@ -183,7 +183,8 @@ export default function BassKingVisualizer({
 
       // Bass-driven screen shake with steeper curve
       // Use exponential curve: low bass = minimal shake, high bass = dramatic shake
-      const shakeIntensity = Math.pow(normalizedBass, 2.5) * 25;
+      const shakeIntensity =
+        Math.pow(normalizedBass, 2.5) * ((radius / 4) * 0.25);
       const shakeX = (Math.random() - 0.5) * shakeIntensity;
       const shakeY = (Math.random() - 0.5) * shakeIntensity;
       ctx.translate(shakeX, shakeY);
