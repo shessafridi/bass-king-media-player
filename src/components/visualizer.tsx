@@ -196,12 +196,29 @@ export default function BassKingVisualizer({
       // Additional bass-driven effects
       if (normalizedBass > fftParams.bassThreshold) {
         // Bass pulse effect - additional ring when bass is strong
-        const pulseRadius = radius * 0.8 + normalizedBass * 80;
-        const pulseAlpha = normalizedBass * 0.4;
-        ctx.strokeStyle = `rgba(255, 100, 255, ${pulseAlpha})`;
-        ctx.lineWidth = 2 + normalizedBass * 16;
-        ctx.shadowBlur = 15 + normalizedBass * 25;
-        ctx.shadowColor = 'rgba(255, 100, 255, 0.8)';
+        const pulseRadius =
+          radius * 0.9 + normalizedBass * (10 * ((radius / 8) * 0.1));
+        const pulseAlpha = normalizedBass * 0.7;
+
+        // Create radial gradient for faded edges
+        const gradient = ctx.createRadialGradient(
+          centerX,
+          centerY,
+          pulseRadius - 20,
+          centerX,
+          centerY,
+          pulseRadius + 20
+        );
+        gradient.addColorStop(0, `rgba(252, 111, 3, 0)`); // Transparent at inner edge
+        gradient.addColorStop(0.3, `rgba(252, 111, 3, ${pulseAlpha})`); // Full color at center
+        gradient.addColorStop(0.5, `rgba(252, 111, 3, ${pulseAlpha})`); // Full color at center
+        gradient.addColorStop(0.7, `rgba(252, 111, 3, ${pulseAlpha})`); // Full color at center
+        gradient.addColorStop(1, `rgba(252, 111, 3, 0)`); // Transparent at outer edge
+
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = 20 + normalizedBass * (radius * 0.4); // Increased lineWidth for gradient effect
+        ctx.shadowBlur = 15 + normalizedBass * 15;
+        ctx.shadowColor = 'rgba(255, 184, 130, 1)';
         ctx.beginPath();
         ctx.arc(centerX, centerY, pulseRadius, 0, Math.PI * 2);
         ctx.stroke();
