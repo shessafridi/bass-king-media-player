@@ -181,8 +181,9 @@ export default function BassKingVisualizer({
         (bass / 256) * fftParams.bassSensitivity
       );
 
-      // Bass-driven screen shake with enhanced intensity
-      const shakeIntensity = normalizedBass * 15;
+      // Bass-driven screen shake with steeper curve
+      // Use exponential curve: low bass = minimal shake, high bass = dramatic shake
+      const shakeIntensity = Math.pow(normalizedBass, 2.5) * 25;
       const shakeX = (Math.random() - 0.5) * shakeIntensity;
       const shakeY = (Math.random() - 0.5) * shakeIntensity;
       ctx.translate(shakeX, shakeY);
@@ -282,11 +283,11 @@ export default function BassKingVisualizer({
       if (logoImage) {
         ctx.save();
 
-        // Apply additional bass shake to logo (on top of the global shake)
-        const logoShakeIntensity = normalizedBass * 8;
-        const logoShakeX = (Math.random() - 0.5) * logoShakeIntensity;
-        const logoShakeY = (Math.random() - 0.5) * logoShakeIntensity;
-        ctx.translate(logoShakeX, logoShakeY);
+        // // Apply additional bass shake to logo (on top of the global shake)
+        // const logoShakeIntensity = normalizedBass * 8;
+        // const logoShakeX = (Math.random() - 0.5) * logoShakeIntensity;
+        // const logoShakeY = (Math.random() - 0.5) * logoShakeIntensity;
+        // ctx.translate(logoShakeX, logoShakeY);
 
         // Logo size with bass responsiveness
         const logoSize = radius * 2 + normalizedBass * 10;

@@ -65,14 +65,12 @@ export default function BassBackground({
       const brightness =
         baseBrightness + normalizedBass * (maxBrightness - baseBrightness);
 
-      // Simplified shake - only apply on strong bass hits
       let transform = '';
-      if (normalizedBass > 0.3) {
-        const shakeIntensity = normalizedBass * 8; // Reduced intensity
-        const shakeX = (Math.random() - 0.5) * shakeIntensity;
-        const shakeY = (Math.random() - 0.5) * shakeIntensity;
-        transform = `translate(${shakeX}px, ${shakeY}px)`;
-      }
+      // Exponential curve: low bass = minimal shake, high bass = dramatic shake
+      const shakeIntensity = Math.pow(normalizedBass, 2.5) * 15;
+      const shakeX = (Math.random() - 0.5) * shakeIntensity;
+      const shakeY = (Math.random() - 0.5) * shakeIntensity;
+      transform = `translate(${shakeX}px, ${shakeY}px)`;
 
       // Apply effects
       container.style.filter = `brightness(${brightness})`;
