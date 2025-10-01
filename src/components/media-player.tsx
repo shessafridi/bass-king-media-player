@@ -16,6 +16,7 @@ import { useFFTAnalyzer } from '../hooks/use-fft-analyzer';
 import { getDefaultFFTParams } from '../lib/fft-params';
 import { useMediaSession } from '../hooks/use-media-session';
 import { parseBlob, type IAudioMetadata } from 'music-metadata';
+import { useMultiMediaKeyboard } from '../hooks/use-multimedia-keyboard';
 
 function uint8ToBase64(uint8Array: Uint8Array) {
   let binary = '';
@@ -292,56 +293,56 @@ export default function MediaPlayer() {
     else setPlaybackState('paused');
   }, [isPlaying, setPlaybackState]);
 
-  // useMultiMediaKeyboard({
-  //   onPlayPause: () => {
-  //     togglePlay();
-  //   },
-  //   onMute: () => {
-  //     toggleMute();
-  //   },
-  //   onPlay: () => play(),
-  //   onPause: () => pause(),
-  //   onStop: () => pause(),
-  //   onFullscreen: () => {
-  //     if (document.fullscreenElement) {
-  //       document.exitFullscreen();
-  //       return;
-  //     }
-  //     const doc = window.document;
-  //     const docEl = doc.documentElement;
-  //     const requestFullScreen =
-  //       docEl.requestFullscreen ||
-  //       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  //       (docEl as any).mozRequestFullScreen ||
-  //       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  //       (docEl as any).webkitRequestFullScreen ||
-  //       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  //       (docEl as any).msRequestFullscreen;
-  //     requestFullScreen.call(docEl);
-  //   },
-  //   onVolumeDown: () => {
-  //     const newVolume = Math.max(0, volume - 0.1);
-  //     setVolume(newVolume);
-  //     if (audioRef.current) {
-  //       audioRef.current.volume = newVolume;
-  //     }
-  //   },
-  //   onVolumeUp: () => {
-  //     const newVolume = Math.min(1, volume + 0.1);
-  //     setVolume(newVolume);
-  //     if (audioRef.current) {
-  //       audioRef.current.volume = newVolume;
-  //     }
-  //   },
-  //   onSeekBackward: () => {
-  //     if (!audioRef.current || !visualizationAudioRef.current) return;
-  //     setSeekTime(audioRef.current.currentTime - 10);
-  //   },
-  //   onSeekForward: () => {
-  //     if (!audioRef.current || !visualizationAudioRef.current) return;
-  //     setSeekTime(audioRef.current.currentTime + 10);
-  //   },
-  // });
+  useMultiMediaKeyboard({
+    onPlayPause: () => {
+      togglePlay();
+    },
+    onMute: () => {
+      toggleMute();
+    },
+    onPlay: () => play(),
+    onPause: () => pause(),
+    onStop: () => pause(),
+    onFullscreen: () => {
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+        return;
+      }
+      const doc = window.document;
+      const docEl = doc.documentElement;
+      const requestFullScreen =
+        docEl.requestFullscreen ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (docEl as any).mozRequestFullScreen ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (docEl as any).webkitRequestFullScreen ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (docEl as any).msRequestFullscreen;
+      requestFullScreen.call(docEl);
+    },
+    onVolumeDown: () => {
+      const newVolume = Math.max(0, volume - 0.1);
+      setVolume(newVolume);
+      if (audioRef.current) {
+        audioRef.current.volume = newVolume;
+      }
+    },
+    onVolumeUp: () => {
+      const newVolume = Math.min(1, volume + 0.1);
+      setVolume(newVolume);
+      if (audioRef.current) {
+        audioRef.current.volume = newVolume;
+      }
+    },
+    onSeekBackward: () => {
+      if (!audioRef.current || !visualizationAudioRef.current) return;
+      setSeekTime(audioRef.current.currentTime - 10);
+    },
+    onSeekForward: () => {
+      if (!audioRef.current || !visualizationAudioRef.current) return;
+      setSeekTime(audioRef.current.currentTime + 10);
+    },
+  });
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);

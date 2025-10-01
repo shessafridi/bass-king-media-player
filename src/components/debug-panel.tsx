@@ -136,7 +136,7 @@ export default function DebugPanel({
             </label>
             <input
               type='range'
-              min='0.8'
+              min='0.2'
               max='0.99'
               step='0.01'
               value={params.decay}
@@ -159,8 +159,8 @@ export default function DebugPanel({
             <input
               type='range'
               min='0'
-              max='1'
-              step='0.1'
+              max='0.99'
+              step='0.05'
               value={params.smoothingTimeConstant}
               onChange={e =>
                 handleParamChange(
