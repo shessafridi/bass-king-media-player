@@ -50,6 +50,10 @@ export default function MediaPlayer() {
     if (!audioFile) return;
     parseBlob(audioFile).then(meta => {
       console.log(meta);
+      if (!meta?.common.title) {
+        setAudioMetadata(null);
+        return;
+      }
       setAudioMetadata(meta);
     });
   }, [audioFile]);
@@ -441,7 +445,9 @@ export default function MediaPlayer() {
               <div className='mb-4'>
                 <h3 className='text-white font-semibold truncate'>
                   {audioMetadata?.common
-                    ? `${audioMetadata?.common.artist} - ${audioMetadata?.common.title}`
+                    ? `${audioMetadata?.common.artist || 'Unknown Artist'} - ${
+                        audioMetadata?.common.title || audioFile.name
+                      }`
                     : audioFile.name}
                 </h3>
                 {!!audioMetadata?.common.album && (
